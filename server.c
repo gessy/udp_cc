@@ -25,6 +25,8 @@ int main(int argc, char *argv[])
 	char snd_buf[MAX_BUF_SIZE];
 	char rcv_ctrl_data[MAX_CTRL_SIZE];
 	socklen_t optlen;
+	unsigned char set;
+	unsigned int ecn;
 
 	(void)argc;
 	(void)argv;
@@ -62,7 +64,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Receive ECN in message */
-	unsigned char set = 1;
+	set = 1;
 	ret = setsockopt(sock_fd, IPPROTO_IP, IP_RECVTOS, &set, sizeof(set));
 	if(ret == -1) {
 		perror("setsockopt()");
@@ -71,7 +73,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Send ECN capable packets */
-	unsigned int ecn = INET_ECN_ECT_0;
+	ecn = INET_ECN_ECT_0;
 	ret = setsockopt(sock_fd, IPPROTO_IP, IP_TOS, &ecn, sizeof(ecn));
 	if(ret == -1) {
 		perror("setsockopt()");
@@ -83,7 +85,7 @@ int main(int argc, char *argv[])
 	sock_fds[0].fd = sock_fd;
 	sock_fds[0].events = POLLIN;
 
-//	std::cout << "Waiting ..." << std::endl;
+	printf("Waiting ...\n");
 
 	/* Prepare message for sending */
 	snd_iov[0].iov_base = snd_buf;
@@ -129,9 +131,6 @@ int main(int argc, char *argv[])
 				close(sock_fd);
 				return EXIT_FAILURE;
 			}
-//			std::cout << "ECN (getsockopt): " << (int)(ecn & INET_ECN_MASK) << std::endl;
-
-//			std::cout << "Sending response ..." << std::endl;
 
 			/* Set destination address:port according source address of client */
 			((struct sockaddr_in*)snd_msg.msg_name)->sin_family =
@@ -149,7 +148,7 @@ int main(int argc, char *argv[])
 				return EXIT_FAILURE;
 			}
 		} else if(ret == 0) {
-//			std::cout << "Timeout ..." << std::endl;
+			printf("Timeout ...\n");
 		} else {
 			perror("poll()");
 			close(sock_fd);

@@ -25,7 +25,8 @@ int main(int argc, char *argv[])
 	char str_addr[INET_ADDRSTRLEN];
 	char rcv_ctrl_data[MAX_CTRL_SIZE];
 	socklen_t optlen;
-	int buf_size;
+	unsigned char set;
+	unsigned int ecn;
 
 	/* Client program has to be run with server name as first argument */
 	if(argc != 2) {
@@ -73,7 +74,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Receive ECN in message */
-	unsigned char set = 1;
+	set = 1;
 	ret = setsockopt(sock_fd, IPPROTO_IP, IP_RECVTOS, &set, sizeof(set));
 	if(ret == -1) {
 		perror("setsockopt()");
@@ -82,7 +83,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Send ECN capable packets */
-	unsigned int ecn = INET_ECN_ECT_0;
+	ecn = INET_ECN_ECT_0;
 	ret = setsockopt(sock_fd, IPPROTO_IP, IP_TOS, &ecn, sizeof(ecn));
 	if(ret == -1) {
 		perror("setsockopt()");
@@ -95,7 +96,7 @@ int main(int argc, char *argv[])
 	snd_buf[0] = 'a';
 	snd_iov[0].iov_len = 1;
 
-	snd_msg.msg_name = NULL;	// Socket is connected
+	snd_msg.msg_name = NULL;	/* Socket is connected */
 	snd_msg.msg_namelen = 0;
 	snd_msg.msg_iov = snd_iov;
 	snd_msg.msg_iovlen = 1;
@@ -106,7 +107,7 @@ int main(int argc, char *argv[])
 	rcv_iov[0].iov_base = rcv_buf;
 	rcv_iov[0].iov_len = MAX_BUF_SIZE;
 
-	rcv_msg.msg_name = NULL;	// Socket is connected
+	rcv_msg.msg_name = NULL;	/* Socket is connected */
 	rcv_msg.msg_namelen = 0;
 	rcv_msg.msg_iov = rcv_iov;
 	rcv_msg.msg_iovlen = 1;
@@ -119,14 +120,14 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 
-	buf_size = recvmsg(sock_fd, &rcv_msg, 0);
-	if ( buf_size == -1) {
+	ret = recvmsg(sock_fd, &rcv_msg, 0);
+	if ( ret == -1) {
 		perror("recvmsg()");
 		close(sock_fd);
 		return EXIT_FAILURE;
 	}
 
-	display_msg(&rcv_msg, buf_size);
+	display_msg(&rcv_msg, ret);
 
 	/* Try to get ECN bits from packet using getsockopt() */
 	ret = getsockopt(sock_fd, IPPROTO_IP, IP_TOS, (void*)&ecn, &optlen);

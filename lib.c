@@ -13,6 +13,7 @@ void display_msg(struct msghdr *msg, int msg_len)
 	unsigned short port;
 	int *ecnptr;
 	unsigned char received_ecn;
+	unsigned int i;
 
 	if(msg->msg_name != NULL) {
 		inet_ntop(AF_INET,
@@ -20,32 +21,32 @@ void display_msg(struct msghdr *msg, int msg_len)
 					str_addr,
 					sizeof(struct sockaddr_in));
 		port = ntohs(((struct sockaddr_in*)msg->msg_name)->sin_port);
-//		std::cout << "UDP message received from: " <<
-//				str_addr << ":" <<
-//				port << std::endl;
+		printf("UDP message received from: %s:%d\n", str_addr, port);
 	}
 
-//	std::cout << "Ctrl len: " << msg->msg_controllen << std::endl;
+	printf("Ctrl len: %d\n", (int)msg->msg_controllen);
 
 	for (cmptr = CMSG_FIRSTHDR(msg);
 			cmptr != NULL;
 			cmptr = CMSG_NXTHDR(msg, cmptr))
 	{
-//		std::cout << "length:" << cmptr->cmsg_len <<
-//				" level: " << cmptr->cmsg_level <<
-//				" type: " << cmptr->cmsg_type << std::endl;
+		printf("Length: %d, level: %d, type: %d\n",
+				(int)cmptr->cmsg_len,
+				(int)cmptr->cmsg_level,
+				(int)cmptr->cmsg_type);
 		if(cmptr->cmsg_level == IPPROTO_IP && cmptr->cmsg_type == IP_TOS) {
 			ecnptr = (int*)CMSG_DATA(cmptr);
 			received_ecn = *ecnptr;
-//			std::cout << "ECN: " << (int)(received_ecn & INET_ECN_MASK) << std::endl;
+			printf("ECN bits: %d\n", (int)(received_ecn & INET_ECN_MASK));
 		}
 	}
 
-//	std::cout << "Buffer size: " << msg_len << " ..."<< std::endl;
-//	std::cout << "Buffer dump: ";
-//	for(int i = 0; i < msg_len; ++i) {
-//		std::cout << ((char*)msg->msg_iov[0].iov_base)[i];
-//	}
-//	std::cout << std::endl;
+	printf("Msg len: %d \n", msg_len);
+
+	printf("Buffer dump: ");
+	for(i = 0; i < msg_len; ++i) {
+		printf("%c", ((char*)msg->msg_iov[0].iov_base)[i]);
+	}
+	printf("\n");
 }
 
